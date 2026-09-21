@@ -1,0 +1,65 @@
+name: Run Core Tests
+
+on:
+  repository_dispatch:
+    types: [core-changed]
+  workflow_dispatch:
+
+jobs:
+  run-core-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        namespace:
+          - statsdb.common
+          - statsdb.fn
+          - statsdb.rpc
+          - statsbuild
+
+    steps:
+      - name: Checkout statstrade-v2
+        uses: actions/checkout@v4
+        with:
+          repository: statstrade-dev/statstrade-v2
+          ref: main
+          path: statstrade-v2
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+          submodules: false
+
+      - name: Checkout ref/foundation at the recorded commit
+        working-directory: statstrade-v2
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "git@github.com:"
+          git submodule update --init --recursive ref/foundation
+          expected="$(git rev-parse HEAD:ref/foundation)"
+          actual="$(git -C ref/foundation rev-parse HEAD)"
+          test "${expected}" = "${actual}"
+          echo "ref/foundation: ${actual}"
+
+      - name: Log into GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GH_USER }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Install foundation and run ${{ matrix.namespace }} tests
+        run: |
+          docker run --rm \
+            --network host \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            ghcr.io/zcaudate-xyz/infra-foundation-dev:ci \
+            bash -lc '
+              set -e
+              cd statstrade-v2/ref/foundation
+              lein install
+              cd ../..
+              lein test :with "${{ matrix.namespace }}"
+            '
