@@ -125,7 +125,8 @@ jobs:
             --prod \
             --site "${NETLIFY_SITE_ID}" \
             --filter site/web-main \
-            --message "web-main ${GITHUB_SHA}"
+            --message "web-main ${GITHUB_SHA}" \
+            --debug
 
       - name: Deploy web-superadmin
         working-directory: statstrade-v2/js/statstrade-app
@@ -139,4 +140,5 @@ jobs:
             --prod \
             --site "${NETLIFY_SITE_ID}" \
             --filter site/web-superadmin \
-            --message "web-superadmin ${GITHUB_SHA}"
+            --message "web-superadmin ${GITHUB_SHA}" \
+            --debug
