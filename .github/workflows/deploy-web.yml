@@ -103,8 +103,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
-          cache-dependency-path: statstrade-v2/js/statstrade-app/yarn.lock
 
       - name: Install frontend dependencies
         working-directory: statstrade-v2/js/statstrade-app
