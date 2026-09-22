@@ -94,6 +94,8 @@ jobs:
               cd statstrade-v2/ref/foundation
               lein install
               cd ../..
+              mkdir -p checkouts
+              ln -s ../ref/foundation checkouts/foundation
               lein run -m statsbuild.project.main libs pages
             '
 
